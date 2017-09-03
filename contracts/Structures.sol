@@ -2,11 +2,11 @@ pragma solidity ^0.4.15;
 
 library Acceptations {
   struct CustomerAccept{
-  bool accepted;
-  string method;
+    bool accepted;
+    string func;
   }
   struct ExecutorAccpet{
-  bool accepted;
-  string method;
+    bool accepted;
+    string func;
   }
 }

@@ -6,11 +6,13 @@ contract DealFactoty {
 
   function createDeal(){
     return new Deal(title, text, attachments, endDate);
-
   }
 }
 
 contract Deal {
+
+  mapping (string => bool) executorConfirms;
+  mapping (string => bool) customerConfirms;
 
   string public title;
   string public description;
@@ -20,14 +22,12 @@ contract Deal {
   address customer;
   address executor;
 
-  bool adopted = false;
+  bool accepted = false;
+  bool depositEnough = false;
 
   uint deposit;
 
-  Acceptations.CustomerAccept customerAccept = Acceptations.CustomerAccept({accepted: _adr, id: _id });
-  Acceptations.ExecutorAccept executorAccept = Acceptations.ExecutorAccept({adr: _adr, id: _id });
-
-  modifier depositeniugh {
+  modifier depositenough {
     require(this.balance == deposit);
     _;
   }
@@ -49,16 +49,19 @@ contract Deal {
 
   function () payable {}
 
-  function Deal(string _title, string _description, string _attachments, string _endDate, address _executor){
+  function Deal(string _title, string _description, string _attachments,
+  string _endDate, address _executor, address _customer, uint _deposit){
     title = _title;
     description = _description;
     attachments = _attachments;
     endDate = _endDate;
     executor = _executor;
+    customer = _customer;
+    deposit = _deposit;
 
   }
 
-  function editDeal(string item, string update){
+  function editDeal(string item, string update) {
     if (item == "title"){
       title = update;
     }
@@ -73,7 +76,41 @@ contract Deal {
     }
   }
 
-  function adopt() onlyExecutor {
-    adopted = true;
+  function startDeal() depositenough onlyMember {
+    if (msg.sender == customer) {
+      required(executorConfirm);
+    }
+    else{
+      required(customerConfirm);
+    }
+    required(now <= endDate);
+  }
+
+  //function editDeposit(uint newDeposit){}
+
+  function() payable{}
+
+  // Executor accepts the terms of deal
+  function accept() onlyExecutor {
+    accepted = true;
+  }
+
+  // customer confirm the execution of the function
+  function customerConfirm(string _func, bool answer) onlyCustomer{
+    customerConfirms[_func] = answer;
+  }
+
+  // executor confirm the execution of the function
+  function executorConfirm(string _func, bool answer) onlyExecutor{
+    executorConfirms[_func] = answer;
+  }
+
+  function checkConfirmation(string _member, string _func) internal{
+    if (_member == 'executor'){
+      return executorConfirms[_func];
+    }
+    if (_member == 'customer'){
+      return customerConfirms[_func];
+    }
   }
 }
